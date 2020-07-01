@@ -1,6 +1,7 @@
 # sf_segmenter
 ---
 Music Segmentation/Labeling Algorithm. Based on SF (Structural feature) method.
+modified from [MSAF](https://github.com/urinieto/msaf). I simplified the IO for arbitrary input features and quick experiments. 
 
 ## Installation 
 version: 0.0.1
