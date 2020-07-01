@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sf_segmenter',
-    version='0.0.1',
+    version='0.0.2',
     description='',
     author='wayne391',
     author_email='s101062219@gmail.com',
