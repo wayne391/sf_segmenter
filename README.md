@@ -1,6 +1,6 @@
 # sf_segmenter
 ---
-Music Segmentation Algorithm.
+Music Segmentation/Labeling Algorithm. Based on SF (Structural feature) method.
 
 ## Installation 
 version: 0.0.1
