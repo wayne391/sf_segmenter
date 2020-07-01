@@ -4,8 +4,14 @@ import numpy as np
 from scipy import signal
 from scipy.spatial import distance
 from scipy.ndimage import filters
-# import msaf.utils as U
 
+from .vis import plot_feats
+from .feature import midi_extract_beat_sync_pianoroll, audio_extract_pcp
+
+
+import miditoolkit
+from miditoolkit.midi import parser as mid_parser
+from miditoolkit.pianoroll import parser as pr_parser
 
 CONFIG = {
     "M_gaussian": 27,
@@ -23,6 +29,18 @@ CONFIG = {
     # "offset_thres"  : 0.01
 }
 
+
+def cummulative_sum_Q(R):
+    len_x, len_y = R.shape
+    Q = np.zeros((len_x + 2, len_y + 2))
+    for i in range(len_x):
+        for j in range(len_y):
+            Q[i+2, j+2] = max(
+                    Q[i+1, j+1],
+                    Q[i, j+1],
+                    Q[i+1, j]) + R[i, j]
+    return np.max(Q)
+    
 
 def normalize(X, norm_type, floor=0.0, min_db=-80):
     """Normalizes the given matrix of features.
@@ -135,29 +153,114 @@ def embedded_space(X, m, tau=1):
     return Y
 
 
+def run_label(
+        boundaries, 
+        R,
+        max_iter=100, 
+        return_feat=False):
+
+    """Labeling algorithm."""
+    n_boundaries = len(boundaries)
+    
+    # compute S
+    S = np.zeros((n_boundaries, n_boundaries))
+    for i in range(n_boundaries - 1):
+        for j in range(n_boundaries - 1):
+            i_st, i_ed = boundaries[i], boundaries[i+1]
+            j_st, j_ed = boundaries[j], boundaries[j+1]
+
+            len_i = i_ed - i_st
+            len_j = j_ed - j_st
+            score = cummulative_sum_Q(R[i_st:i_ed, j_st:j_ed])
+            S[i, j] = score / min(len_i, len_j)    
+    
+    # threshold
+    thr = np.std(S) + np.mean(S)
+    S[S <= thr] = 0       
+    
+    # iteration
+    S_trans = S.copy()
+    
+    for i in range(max_iter):
+        S_trans = np.matmul(S_trans, S)
+        
+    S_final = S_trans > 1
+    
+    # proc output
+    n_seg = len(S_trans) - 1
+    labs = np.ones(n_seg) * -1
+    cur_tag = int(-1)
+    for i in range(n_seg):
+        print(' >', i)
+        if labs[i] == -1:
+            cur_tag += 1
+            labs[i] = cur_tag
+            for j in range(n_seg):
+                if S_final[i, j]:
+                    labs[j] = cur_tag
+    
+    if return_feat:
+        return labs, (S, S_trans, S_final)
+    else:
+        return labs
+
+
 class Segmenter(object):
     def __init__(self, config=CONFIG):
         self.config = config
-        
+        self.refresh()
+
+    def refresh(self):
         # collect feats
+        # - segmentation
         self.F = None
         self.E = None
         self.R = None
         self.L = None
         self.SF = None
         self.nc = None
+
+        # - labeling
+        self.S = None
+        self.S_trans = None
+        self.S_final = None
+
+        # - res
+        self.boundaries = None
+        self.labs = None
+
+
+    def proc_midi(self, path_midi, is_label=True):
+        # parse midi to pianoroll
+        midi_obj = mid_parser.MidiFile(path_midi)
+        notes = midi_obj.instruments[0].notes
+        pianoroll = pr_parser.notes2pianoroll(
+                            notes)
+
+        # pianoroll to beat sync pianoroll
+        pianoroll_sync = midi_extract_beat_sync_pianoroll(
+                pianoroll,
+                midi_obj.ticks_per_beat)  
+
+        return self.process(pianoroll_sync, is_label=is_label)
+
+    def proc_audio(self, path_audio, sr=22050, is_label=True):
+        y, sr = librosa.load(path_audio, sr=sr)
+        pcp = audio_extract_pcp(y, sr)
+        return self.process(pcp, is_label=is_label)
+
         
-    def process(self, F):
+    def process(
+            self, 
+            F, 
+            is_label=False):
         """Main process.
         Returns
 
         F: feature. T x D
-        -------
-        est_idxs : np.array(N)
-            Estimated times for the segment boundaries in frame indeces.
-        est_labels : np.array(N-1)
-            Estimated labels for the segments.
         """
+        self.refresh()
+
         # Structural Features params
         Mp = self.config["Mp_adaptive"]   # Size of the adaptive threshold for
                                           # peak picking
@@ -215,65 +318,38 @@ class Segmenter(object):
         self.L = L
         self.SF = SF
         self.nc = nc
-        
-        return est_idxs
 
+        if is_label:
+            labs, (S, S_trans, S_final) = run_label(
+                est_idxs, 
+                R,
+                return_feat=True)
 
-if __name__ == '__main__':
-    from vis import plot_feats
-    # --- audio --- #
-    # import soundfile as sf
-    # from feature import audio_extract_pcp
-    # # dummy input
-    # input_feat = np.zeros(442, 12) # T x F
-    
-    # real input
-    # path_audio = librosa.util.example_audio_file()
-    # y, sr = sf.read(path_audio)
-    # pcp = audio_extract_pcp(y, sr)
+            self.S = S
+            self.S_trans = S_trans
+            self.S_final = S_final
+            
+            self.boundaries = est_idxs
+            self.labs = labs
+            return est_idxs, labs
+        else:
+            self.boundaries = est_idxs
+            return est_idxs
 
-    # #  init
-    # segmenter = Segmenter()
+    def plot(
+            self, 
+            outdir=None,
+            vis_bounds=True):
 
-    # # run
-    # boundarues = segmenter.process(pcp)
-
-    # --- midi --- # 
-    import miditoolkit
-    from miditoolkit.midi import parser as mid_parser
-    from miditoolkit.pianoroll import parser as pr_parser
-    from feature import midi_extract_beat_sync_pianoroll
-
-    # parse midi to pianoroll
-    path_midi = miditoolkit.midi.utils.example_midi_file()
-    midi_obj = mid_parser.MidiFile(path_midi)
-
-    notes = midi_obj.instruments[0].notes
-    pianoroll = pr_parser.notes2pianoroll(
-                        notes)
-
-    # pianoroll to beat sync pianoroll
-    pianoroll_sync = midi_extract_beat_sync_pianoroll(
-            pianoroll,
-            midi_obj.ticks_per_beat)  
-
-    print('pianoroll_sync :', pianoroll_sync.shape)
-    #  init
-    segmenter = Segmenter()
-
-    # run
-    boundaries = segmenter.process(pianoroll_sync)
-
-    # vis
-    data = {
-        'input': segmenter.F,
-        'R': segmenter.R,
-        'L': segmenter.L,
-        'SF': segmenter.SF,
-        'nc': segmenter.nc,
-    }
-    plot_feats(data, 
-        boundaries, 
-        outdir='doc')
-
-    print('boundaries:', boundaries)
+        plot_feats(
+            F=self.F,
+            R=self.R,
+            L=self.L,
+            SF=self.SF,
+            nc=self.nc,
+            S=self.S,
+            S_trans=self.S_trans,
+            S_final=self.S_final,
+            boundaries=self.boundaries,
+            outdir=outdir,
+            vis_bounds=vis_bounds)

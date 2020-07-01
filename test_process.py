@@ -2,6 +2,7 @@ import numpy as np
 from sf_segmenter.vis import plot_feats
 from sf_segmenter.segmenter import Segmenter
 
+
 # --- audio --- #
 print(' [*] runnung audio...')
 
@@ -23,21 +24,13 @@ pcp = audio_extract_pcp(y, sr)
 segmenter = Segmenter()
 
 # run
-boundaries = segmenter.process(pcp)
+boundaries, labs = segmenter.process(pcp, is_label=True)
+print('boundaries:', boundaries)
+print('labs:', labs)
 
 # vis
-data = {
-    'input': segmenter.F,
-    'R': segmenter.R,
-    'L': segmenter.L,
-    'SF': segmenter.SF,
-    'nc': segmenter.nc,
-}
-plot_feats(data, 
-    boundaries, 
-    outdir='doc/audio')
+segmenter.plot(outdir='doc/audio')
 
-print('boundaries:', boundaries)
 
 # --- midi --- # 
 print(' [*] runnung midi...')
@@ -64,18 +57,9 @@ print('pianoroll_sync :', pianoroll_sync.shape)
 segmenter = Segmenter()
 
 # run
-boundaries = segmenter.process(pianoroll_sync)
+boundaries, labs = segmenter.process(pianoroll_sync, is_label=True)
+print('boundaries:', boundaries)
+print('labs:', labs)
 
 # vis
-data = {
-    'input': segmenter.F,
-    'R': segmenter.R,
-    'L': segmenter.L,
-    'SF': segmenter.SF,
-    'nc': segmenter.nc,
-}
-plot_feats(data, 
-    boundaries, 
-    outdir='doc/midi')
-
-print('boundaries:', boundaries)
+segmenter.plot(outdir='doc/midi')

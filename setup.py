@@ -11,7 +11,6 @@ setup(
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
-        "Multimedia :: Sound/Audio :: Analysis",
     ],
     keywords='music audio midi mir',
     license='MIT',
