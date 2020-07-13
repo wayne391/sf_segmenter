@@ -35,6 +35,7 @@ def plot_feats(
         plt.title('input feature')
         plt.savefig(os.path.join(outdir, 'input.png'))
         # plt.show()
+        plt.close()
 
     # plot recurrence plot (R)
     if R is not None:
@@ -46,6 +47,7 @@ def plot_feats(
         plt.title('recurrence plot')
         plt.savefig(os.path.join(outdir, 'R.png'))
         # plt.show()
+        plt.close()
 
     # plot time-lag (L)
     if L is not None:
@@ -56,6 +58,7 @@ def plot_feats(
             [plt.axhline(p, color="red", linestyle=':') for p in boundaries]
         plt.savefig(os.path.join(outdir, 'L.png'))
         # plt.show()
+        plt.close()
 
     #  plot smoothed time-lag (SF)
     if SF is not None:
@@ -67,6 +70,7 @@ def plot_feats(
             [plt.axhline(p, color="red", linestyle=':') for p in boundaries]
         plt.savefig(os.path.join(outdir, 'SF.png'))
         # plt.show(block=False))
+        plt.close()
 
     # plot novelty cureve (nc)
     if nc is not None:
@@ -77,22 +81,26 @@ def plot_feats(
         plt.title('novelty curve')
         plt.savefig(os.path.join(outdir, 'nc.png'))
         # plt.show()
+        plt.close()
 
     # labeling features
     if S is not None:
         plt.figure(figsize=(5, 5))
         plt.imshow(S, interpolation="nearest", cmap=plt.get_cmap("binary"))
-        plt.savefig(os.path.join(outdir, 'lab_S.png'))
         plt.title('labeling: S')
+        plt.savefig(os.path.join(outdir, 'lab_S.png'))
+        plt.close()
 
     if S_trans is not None:
         plt.figure(figsize=(5, 5))
         plt.imshow(S_trans, interpolation="nearest", cmap=plt.get_cmap("binary"))
-        plt.savefig(os.path.join(outdir, 'lab_S_trans.png'))
         plt.title('labeling: S trans')
-
+        plt.savefig(os.path.join(outdir, 'lab_S_trans.png'))
+        plt.close()
+       
     if S_final is not None:
         plt.figure(figsize=(5, 5))
         plt.imshow(S_final, interpolation="nearest", cmap=plt.get_cmap("binary"))
-        plt.savefig(os.path.join(outdir, 'lab_S_final.png'))
         plt.title('labeling: S final')
+        plt.savefig(os.path.join(outdir, 'lab_S_final.png'))
+        plt.close()
