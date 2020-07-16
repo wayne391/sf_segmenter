@@ -14,3 +14,7 @@ pip install sf-segmenter
 
 * J. Serrà, M. Müller, P. Grosche and J. L. Arcos, "Unsupervised Music Structure Annotation by Time Series Structure Features and Segment Similarity," in IEEE Transactions on Multimedia, vol. 16, no. 5, pp. 1229-1240, Aug. 2014, doi: 10.1109/TMM.2014.2310701.
 
+## Resources
+
+* audiolabs/FMP course/Chapter 4: Music Structure Analysis: https://www.audiolabs-erlangen.de/resources/MIR/FMP/C4/C4.html
+
