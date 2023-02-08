@@ -9,6 +9,13 @@ version: 0.0.1
 pip install sf-segmenter
 ```
 
+To use `sf_segmenter.vis`, matplotlib needs to be installed; you can install it with the `vis` extra:
+
+```
+pip install sf-segmenter[vis]
+```
+
+
 ## Reference
 * Serrà, J., Müller, M., Grosche, P., & Arcos, J. L. (2012). Unsupervised Detection of Music Boundaries by Time Series Structure Features. In Proc. of the 26th AAAI Conference on Artificial Intelligence (pp. 1613–1619).Toronto, Canada.
 

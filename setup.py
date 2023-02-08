@@ -16,7 +16,10 @@ setup(
     license='MIT',
     install_requires=[
         'miditoolkit >= 0.1.14',
-    ]
+    ],
+    extras_require={
+        'vis': ['matplotlib'],
+    },
 )
 
 
